@@ -68,6 +68,11 @@ else()
   set(CMAKE_CXX_EXTENSIONS NO)
 endif()
 
+if(WIN32)
+    set(CMAKE_CXX_CREATE_STATIC_LIBRARY  "<CMAKE_LINKER> /lib ${CMAKE_CL_NOLOGO} <LINK_FLAGS> /out:<TARGET> <OBJECTS> ")
+    set(CMAKE_C_CREATE_STATIC_LIBRARY  "<CMAKE_LINKER> /lib ${CMAKE_CL_NOLOGO} <LINK_FLAGS> /out:<TARGET> <OBJECTS> ")
+endif()
+
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(FATAL_ERROR "
 No build type selected. You need to pass -DCMAKE_BUILD_TYPE=<type> in order to configure LLVM.
