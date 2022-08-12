@@ -736,8 +736,15 @@ void SimplifyBooleanExprCheck::replaceWithThenStatement(
 void SimplifyBooleanExprCheck::replaceWithElseStatement(
     const ASTContext &Context, const IfStmt *IfStatement,
     const Expr *BoolLiteral) {
+  SourceRange Range = IfStatement->getSourceRange();
+  // workaround for dangling semicolon
+  if (!IfStatement->getElse() && !isa<CompoundStmt>(IfStatement->getThen())) {
+    SourceLocation NextSymLoc = Range.getEnd().getLocWithOffset(1);
+    if (getText(Context, SourceRange(NextSymLoc, NextSymLoc)) == ";")
+      Range = SourceRange(Range.getBegin(), NextSymLoc);
+  }
   issueDiag(Context, BoolLiteral->getBeginLoc(), SimplifyConditionDiagnostic,
-            IfStatement->getSourceRange(),
+            Range,
             getBlockText(Context, IfStatement->getElse()));
 }
 
