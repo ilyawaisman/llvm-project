@@ -66,10 +66,13 @@ private:
                  StringRef Description, SourceRange ReplacementRange,
                  StringRef Replacement);
 
+  std::string getBlockText(const ASTContext &Context, const Stmt *NullableStmt);
+
   const bool ChainedConditionalReturn;
   const bool ChainedConditionalAssignment;
   const bool SimplifyDeMorgan;
   const bool SimplifyDeMorganRelaxed;
+  const bool UnwrapBlocks;
 };
 
 } // namespace readability

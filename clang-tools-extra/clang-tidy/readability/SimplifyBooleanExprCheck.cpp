@@ -586,7 +586,8 @@ SimplifyBooleanExprCheck::SimplifyBooleanExprCheck(StringRef Name,
       ChainedConditionalAssignment(
           Options.get("ChainedConditionalAssignment", false)),
       SimplifyDeMorgan(Options.get("SimplifyDeMorgan", true)),
-      SimplifyDeMorganRelaxed(Options.get("SimplifyDeMorganRelaxed", false)) {
+      SimplifyDeMorganRelaxed(Options.get("SimplifyDeMorganRelaxed", false)),
+      UnwrapBlocks(Options.get("UnwrapBlocks", false)) {
   if (SimplifyDeMorganRelaxed && !SimplifyDeMorgan)
     configurationDiag("%0: 'SimplifyDeMorganRelaxed' cannot be enabled "
                       "without 'SimplifyDeMorgan' enabled")
@@ -675,6 +676,7 @@ void SimplifyBooleanExprCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
                 ChainedConditionalAssignment);
   Options.store(Opts, "SimplifyDeMorgan", SimplifyDeMorgan);
   Options.store(Opts, "SimplifyDeMorganRelaxed", SimplifyDeMorganRelaxed);
+  Options.store(Opts, "UnwrapBlocks", UnwrapBlocks);
 }
 
 void SimplifyBooleanExprCheck::registerMatchers(MatchFinder *Finder) {
@@ -683,6 +685,30 @@ void SimplifyBooleanExprCheck::registerMatchers(MatchFinder *Finder) {
 
 void SimplifyBooleanExprCheck::check(const MatchFinder::MatchResult &Result) {
   Visitor(this, *Result.Context).traverse();
+}
+
+std::string SimplifyBooleanExprCheck::getBlockText(const ASTContext &Context,
+                                                   const Stmt *NullableStmt) {
+  if (!NullableStmt)
+    return "";
+
+  SourceRange Range;
+  StringRef Terminator = "";
+  if (UnwrapBlocks) {
+    const CompoundStmt *Compound = dyn_cast<CompoundStmt>(NullableStmt);
+    if (Compound) {
+      if (!Compound->body_empty()) {
+        Range = {Compound->body_front()->getBeginLoc(), Compound->body_back()->getEndLoc()};
+        Terminator = ";";
+      }
+      // else invalid Range
+    } else {
+      Range = NullableStmt->getSourceRange();
+    }
+  } else {
+    Range = NullableStmt->getSourceRange();
+  }
+  return (Range.isValid() ? getText(Context, Range) + Terminator : "").str();
 }
 
 void SimplifyBooleanExprCheck::issueDiag(const ASTContext &Context,
@@ -704,16 +730,15 @@ void SimplifyBooleanExprCheck::replaceWithThenStatement(
     const Expr *BoolLiteral) {
   issueDiag(Context, BoolLiteral->getBeginLoc(), SimplifyConditionDiagnostic,
             IfStatement->getSourceRange(),
-            getText(Context, *IfStatement->getThen()));
+            getBlockText(Context, IfStatement->getThen()));
 }
 
 void SimplifyBooleanExprCheck::replaceWithElseStatement(
     const ASTContext &Context, const IfStmt *IfStatement,
     const Expr *BoolLiteral) {
-  const Stmt *ElseStatement = IfStatement->getElse();
   issueDiag(Context, BoolLiteral->getBeginLoc(), SimplifyConditionDiagnostic,
             IfStatement->getSourceRange(),
-            ElseStatement ? getText(Context, *ElseStatement) : "");
+            getBlockText(Context, IfStatement->getElse()));
 }
 
 void SimplifyBooleanExprCheck::replaceWithCondition(
