@@ -693,13 +693,15 @@ std::string SimplifyBooleanExprCheck::getBlockText(const ASTContext &Context,
     return "";
 
   SourceRange Range;
-  StringRef Terminator = "";
+  StringRef Prologue = "";
+  StringRef Epilogue = "";
   if (UnwrapBlocks) {
     const CompoundStmt *Compound = dyn_cast<CompoundStmt>(NullableStmt);
     if (Compound) {
       if (!Compound->body_empty()) {
         Range = {Compound->body_front()->getBeginLoc(), Compound->body_back()->getEndLoc()};
-        Terminator = ";";
+        Prologue = "// TODO: review this change, this code block was unwrapped by clang-tidy, code semantic may have changed, manual check required\n";
+        Epilogue = ";\n// TODO: end of automatically unwrapped code block, see above for details";
       }
       // else invalid Range
     } else {
@@ -708,7 +710,11 @@ std::string SimplifyBooleanExprCheck::getBlockText(const ASTContext &Context,
   } else {
     Range = NullableStmt->getSourceRange();
   }
-  return (Range.isValid() ? getText(Context, Range) + Terminator : "").str();
+
+  if (!Range.isValid())
+    return "";
+
+  return (Prologue + getText(Context, Range) + Epilogue).str();
 }
 
 void SimplifyBooleanExprCheck::issueDiag(const ASTContext &Context,
