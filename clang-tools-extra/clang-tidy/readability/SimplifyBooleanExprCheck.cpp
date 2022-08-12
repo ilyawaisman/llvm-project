@@ -298,12 +298,12 @@ public:
 
   // Extracts a bool if an expression is (true|false|!true|!false);
   static Optional<bool> getAsBoolLiteral(const Expr *E, bool FilterMacro) {
-    if (const auto *Bool = dyn_cast<CXXBoolLiteralExpr>(E)) {
+    if (const auto *Bool = dyn_cast<CXXBoolLiteralExpr>(E->IgnoreParens())) {
       if (FilterMacro && Bool->getBeginLoc().isMacroID())
         return llvm::None;
       return Bool->getValue();
     }
-    if (const auto *UnaryOp = dyn_cast<UnaryOperator>(E)) {
+    if (const auto *UnaryOp = dyn_cast<UnaryOperator>(E->IgnoreParens())) {
       if (FilterMacro && UnaryOp->getBeginLoc().isMacroID())
         return None;
       if (UnaryOp->getOpcode() == UO_LNot)
