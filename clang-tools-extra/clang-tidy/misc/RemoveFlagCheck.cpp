@@ -180,6 +180,37 @@ private:
     RemoveFlagCheck &Check;
 };
 
+class RemoveFlagCheck::CommentHinter : public CommentHandler {
+public:
+    CommentHinter(RemoveFlagCheck &Check)
+        : Check(Check) {}
+
+    bool HandleComment(Preprocessor &PP, SourceRange Range) override {
+      StringRef Text =
+          Lexer::getSourceText(CharSourceRange::getCharRange(Range),
+                               PP.getSourceManager(), PP.getLangOpts());
+
+      for (const auto &Flag: Check.Flags) {
+        size_t From = 0;
+        do {
+          size_t Pos = Text.find(Flag.Name, From);
+          if (Pos == StringRef::npos)
+            break;
+
+          From = Pos + Flag.Name.size();
+          SourceLocation After = Range.getBegin().getLocWithOffset(From);
+          Check.diag(Range.getBegin().getLocWithOffset(Pos), "comment on a flag to be removed")
+              << FixItHint::CreateInsertion(After, " <--TODO: This flag is removed, check for required updates-- ");
+        }
+        while (true);
+      }
+      return false;
+    }
+
+private:
+    RemoveFlagCheck &Check;
+};
+
 class RemoveFlagCheck::Visitor : public RecursiveASTVisitor<Visitor> {
     using Base = RecursiveASTVisitor<Visitor>;
 
@@ -207,6 +238,13 @@ private:
     ASTContext &Context;
 };
 
+RemoveFlagCheck::RemoveFlagCheck(StringRef Name, ClangTidyContext *Context)
+    : ClangTidyCheck(Name, Context)
+    , Hinter(std::make_unique<CommentHinter>(*this))
+    , Flags(deserializeFlags(Options.get("Flags", ""))) {}
+
+RemoveFlagCheck::~RemoveFlagCheck() = default;
+
 void RemoveFlagCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
   Options.store(Opts, "Flags", serializeFlags(Flags));
 }
@@ -214,6 +252,7 @@ void RemoveFlagCheck::storeOptions(ClangTidyOptions::OptionMap &Opts) {
 void RemoveFlagCheck::registerPPCallbacks(
     const SourceManager &SM, Preprocessor *PP, Preprocessor *ModuleExpanderPP) {
   PP->addPPCallbacks(::std::make_unique<PPCallback>(*this));
+  PP->addCommentHandler(Hinter.get());
 }
 
 void RemoveFlagCheck::registerMatchers(MatchFinder *Finder) {

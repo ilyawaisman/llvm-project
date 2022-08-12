@@ -9,12 +9,12 @@ namespace misc {
 
 /// Removes specific fast flags from codebase:
 /// * removes definitions and declarations of flags,
-/// * substitutes usages with values provided.
+/// * substitutes usages with values provided,
+/// * adds a T_O_D_O item when flag is mentioned in comments.
 class RemoveFlagCheck : public ClangTidyCheck {
 public:
-    RemoveFlagCheck(StringRef Name, ClangTidyContext *Context)
-        : ClangTidyCheck(Name, Context)
-        , Flags(deserializeFlags(Options.get("Flags", ""))) {}
+    RemoveFlagCheck(StringRef Name, ClangTidyContext *Context);
+    ~RemoveFlagCheck();
 
     void storeOptions(ClangTidyOptions::OptionMap &Options) override;
     void registerPPCallbacks(const SourceManager &SM, Preprocessor *PP,
@@ -48,8 +48,10 @@ private:
     static std::string serializeFlag(FlagDesc Flag);
 
     class PPCallback;
+    class CommentHinter;
     class Visitor;
 
+    std::unique_ptr<CommentHinter> Hinter;
     std::vector<FlagDesc> Flags;
 };
 
