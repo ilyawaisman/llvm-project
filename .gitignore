@@ -28,6 +28,7 @@
 
 # Nested build directory
 /build*
+**/cmake-build-*
 
 #==============================================================================#
 # Explicit files to ignore (only matches one).
@@ -50,7 +51,7 @@ autoconf/autom4te.cache
 # Visual Studio built-in CMake configuration
 /CMakeSettings.json
 # CLion project configuration
-/.idea
+**/.idea
 
 #==============================================================================#
 # Directories to ignore (do not add trailing '/'s, they skip symlinks).
