@@ -24,7 +24,7 @@ public:
 
 private:
     enum class FlagKind {
-        Dynamic, Static
+        Dynamic, Static, Synchronized
     };
     static StringRef flagKindDfnDeclPrefix(FlagKind Kind);
     static StringRef flagKindNSPrefix(FlagKind Kind);

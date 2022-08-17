@@ -50,6 +50,8 @@ StringRef RemoveFlagCheck::flagKindNSPrefix(FlagKind Kind) {
   switch (Kind) {
     case FlagKind::Dynamic:
       return "D";
+    case FlagKind::Synchronized:
+      return "S";
     case FlagKind::Static:
       return "";
   }
@@ -61,6 +63,8 @@ StringRef RemoveFlagCheck::flagKindDfnDeclPrefix(FlagKind Kind) {
   switch (Kind) {
     case FlagKind::Dynamic:
       return "DYNAMIC_";
+    case FlagKind::Synchronized:
+      return "SYNCHRONIZED_";
     case FlagKind::Static:
       return "";
   }
