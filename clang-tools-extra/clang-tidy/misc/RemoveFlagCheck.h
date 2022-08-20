@@ -26,6 +26,12 @@ private:
     enum class FlagKind {
         Dynamic, Static, Synchronized
     };
+    static constexpr std::initializer_list<FlagKind> FlagKindAll = {
+        FlagKind::Dynamic,
+        FlagKind::Static,
+        FlagKind::Synchronized
+    };
+
     static StringRef flagKindDfnDeclPrefix(FlagKind Kind);
     static StringRef flagKindNSPrefix(FlagKind Kind);
 

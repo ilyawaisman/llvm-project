@@ -43,7 +43,8 @@ StringRef getText(const ASTContext &Context, T &Node) {
 
 constexpr llvm::StringRef VariableSuffix = "VARIABLE";
 constexpr llvm::StringRef FastFlagInfix = "FASTFLAG";
-constexpr llvm::StringRef FastFlagNS = "FFlag::";
+constexpr llvm::StringRef FastFlagNS = "FFlag";
+constexpr llvm::StringRef NSSep = "::";
 } // End of anonymous namespace.
 
 StringRef RemoveFlagCheck::flagKindNSPrefix(FlagKind Kind) {
@@ -74,9 +75,10 @@ StringRef RemoveFlagCheck::flagKindDfnDeclPrefix(FlagKind Kind) {
 
 std::string RemoveFlagCheck::FlagDesc::QualVarName() const {
   std::string Result;
-  Result.reserve(1 + FastFlagNS.size() + Name.size());
+  Result.reserve(1 + FastFlagNS.size() + NSSep.size() + Name.size());
   Result += flagKindNSPrefix(Kind);
   Result += FastFlagNS;
+  Result += NSSep;
   Result += Name;
   return Result;
 }
@@ -125,13 +127,18 @@ std::unique_ptr <RemoveFlagCheck::FlagDesc> RemoveFlagCheck::deserializeFlag(Str
     return nullptr;
   }
 
-  FlagKind Kind = FlagKind::Static;
-  if (NS.startswith("D")) {
-    Kind = FlagKind::Dynamic;
-    NS = NS.drop_front(1);
+  FlagKind Kind;
+  bool ValidKind = false;
+  for (FlagKind AKind : FlagKindAll)
+  {
+    if (isComprisedOf(NS, flagKindNSPrefix(AKind), FastFlagNS)) {
+      Kind = AKind;
+      ValidKind = true;
+      break;
+    }
   }
 
-  if (NS != "FFlag") {
+  if (!ValidKind) {
     llvm::errs() << "Failed to parse flag entry '" << Str << "', unknown namespace\n";
     return nullptr;
   }
@@ -227,7 +234,7 @@ public:
     bool VisitDeclRefExpr(DeclRefExpr *D) {
       StringRef Name = getText(Context, *D);
       for (const auto &Flag: Check.Flags) {
-        if (!isComprisedOf(Name, flagKindNSPrefix(Flag.Kind), FastFlagNS, Flag.Name))
+        if (!isComprisedOf(Name, flagKindNSPrefix(Flag.Kind), FastFlagNS, NSSep, Flag.Name))
           continue;
 
         Check.diag(D->getLocation(), "usage of a flag to be substituted with value")
