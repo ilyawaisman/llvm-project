@@ -32,6 +32,7 @@ add_extra_unittest(ClangTidyTests
   OverlappingReplacementsTest.cpp
   UsingInserterTest.cpp
   ReadabilityModuleTest.cpp
+  RobloxModuleTest.cpp
   TransformerClangTidyCheckTest.cpp
   )
 
@@ -56,6 +57,7 @@ target_link_libraries(ClangTidyTests
   clangTidyModernizeModule
   clangTidyObjCModule
   clangTidyReadabilityModule
+  clangTidyMiscModule
   clangTidyUtils
   LLVMTestingSupport
   )
