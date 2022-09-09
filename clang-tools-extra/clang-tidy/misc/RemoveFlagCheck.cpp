@@ -84,9 +84,12 @@ std::string RemoveFlagCheck::FlagDesc::QualVarName() const {
 }
 
 std::vector <RemoveFlagCheck::FlagDesc> RemoveFlagCheck::deserializeFlags(StringRef Str) {
+  std::vector <RemoveFlagCheck::FlagDesc> Result;
+  if (Str.empty())
+    return Result;
+
   SmallVector <StringRef> FlagStrs;
   Str.split(FlagStrs,',');
-  std::vector <RemoveFlagCheck::FlagDesc> Result;
   Result.reserve(FlagStrs.size());
   for (const auto FlagStr: FlagStrs) {
     auto Flag = deserializeFlag(FlagStr);
@@ -271,7 +274,8 @@ void RemoveFlagCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void RemoveFlagCheck::check(const MatchFinder::MatchResult &Result) {
-  Visitor(*this, *Result.Context).traverse();
+  if (!Flags.empty())
+    Visitor(*this, *Result.Context).traverse();
 }
 
 } // namespace misc
