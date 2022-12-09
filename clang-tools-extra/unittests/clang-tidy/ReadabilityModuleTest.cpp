@@ -545,20 +545,26 @@ TEST(SimplifyBooleanExprCheckTest, UnwrapBlocks) {
   Options.CheckOptions["test-check-0.UnwrapBlocks"] = "true";
 
   EXPECT_EQ("void foo(){ int i = 0; // TODO: review this change, this code block was unwrapped by clang-tidy, code semantic may have changed, manual check required\n"
-             "i = 1;\n"
-             "// TODO: end of automatically unwrapped code block, see above for details }",
+             "// [UNWRAPPED_BLOCK_BEGIN]\n"
+             " i = 1;\n"
+             "// [UNWRAPPED_BLOCK_END]\n"
+             " }",
             runCheckOnCode<SimplifyBooleanExprCheck>(
             "void foo(){ int i = 0; if (true) { i = 1; } }",
                 nullptr, "input.cc", None, Options));
   EXPECT_EQ("void foo(){ int i = 0; // TODO: review this change, this code block was unwrapped by clang-tidy, code semantic may have changed, manual check required\n"
-             "i = 1;\n"
-             "// TODO: end of automatically unwrapped code block, see above for details }",
+             "// [UNWRAPPED_BLOCK_BEGIN]\n"
+             " i = 1;\n"
+             "// [UNWRAPPED_BLOCK_END]\n"
+             " }",
             runCheckOnCode<SimplifyBooleanExprCheck>(
             "void foo(){ int i = 0; if (true) { i = 1; } else { i = 2; } }",
                 nullptr, "input.cc", None, Options));
   EXPECT_EQ("void foo(){ int i = 0; // TODO: review this change, this code block was unwrapped by clang-tidy, code semantic may have changed, manual check required\n"
-             "i = 2;\n"
-             "// TODO: end of automatically unwrapped code block, see above for details }",
+             "// [UNWRAPPED_BLOCK_BEGIN]\n"
+             " i = 2;\n"
+             "// [UNWRAPPED_BLOCK_END]\n"
+             " }",
             runCheckOnCode<SimplifyBooleanExprCheck>(
             "void foo(){ int i = 0; if (false) { i = 1; } else { i = 2; } }",
                 nullptr, "input.cc", None, Options));

@@ -698,12 +698,10 @@ std::string SimplifyBooleanExprCheck::getBlockText(const ASTContext &Context,
   if (UnwrapBlocks) {
     const CompoundStmt *Compound = dyn_cast<CompoundStmt>(NullableStmt);
     if (Compound) {
-      if (!Compound->body_empty()) {
-        Range = {Compound->body_front()->getBeginLoc(), Compound->body_back()->getEndLoc()};
-        Prologue = "// TODO: review this change, this code block was unwrapped by clang-tidy, code semantic may have changed, manual check required\n";
-        Epilogue = ";\n// TODO: end of automatically unwrapped code block, see above for details";
-      }
-      // else invalid Range
+      Range = {Compound->getBeginLoc().getLocWithOffset(1), Compound->getEndLoc().getLocWithOffset(-1)};
+      Prologue = "// TODO: review this change, this code block was unwrapped by clang-tidy, code semantic may have changed, manual check required\n"
+                 "// [UNWRAPPED_BLOCK_BEGIN]\n";
+      Epilogue = "\n// [UNWRAPPED_BLOCK_END]\n";
     } else {
       Range = NullableStmt->getSourceRange();
     }
